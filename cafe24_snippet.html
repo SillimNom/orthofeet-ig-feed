@@ -1,0 +1,50 @@
+<!-- 카페24 스마트디자인: 기존 Our Highlights 배너 영역을 이 코드로 교체
+     GITHUB_USER/REPO 두 곳만 실제 값으로 바꾸세요. -->
+<section class="ig-hl">
+  <h2 class="ig-hl__title">Our Highlights</h2>
+  <div class="ig-hl__grid" id="igHl"></div>
+</section>
+
+<style>
+.ig-hl{max-width:1360px;margin:0 auto;padding:0 16px}
+.ig-hl__title{text-align:center;font-size:28px;font-weight:700;margin:0 0 40px}
+.ig-hl__grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.ig-hl__item{position:relative;display:block;aspect-ratio:4 / 5;overflow:hidden;background:#eee}
+.ig-hl__item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.ig-hl__item:hover img{transform:scale(1.04)}
+.ig-hl__icon{position:absolute;top:10px;right:10px;width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;
+  filter:drop-shadow(0 0 3px rgba(0,0,0,.45));opacity:.95}
+@media(max-width:900px){.ig-hl__grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.ig-hl__grid{grid-template-columns:repeat(2,1fr)}.ig-hl__icon{width:22px;height:22px}}
+</style>
+
+<script>
+(function () {
+  var BASE = 'https://cdn.jsdelivr.net/gh/GITHUB_USER/REPO@main/';
+  var ICON = '<svg class="ig-hl__icon" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/>' +
+    '<circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none"/></svg>';
+  var grid = document.getElementById('igHl');
+
+  fetch(BASE + 'feed.json')
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function (items) {
+      items.slice(0, 12).forEach(function (it) {
+        var a = document.createElement('a');
+        a.className = 'ig-hl__item';
+        a.href = it.permalink;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.setAttribute('aria-label', '오쏘핏 인스타그램 게시물 보기');
+        var img = new Image();
+        img.src = BASE + it.image;
+        img.alt = '오쏘핏 인스타그램 게시물';
+        img.loading = 'lazy';
+        a.appendChild(img);
+        a.insertAdjacentHTML('beforeend', ICON);
+        grid.appendChild(a);
+      });
+    })
+    .catch(function () { grid.closest('.ig-hl').style.display = 'none'; });
+})();
+</script>
