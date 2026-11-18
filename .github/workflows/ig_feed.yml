@@ -20,22 +20,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: 피드 수집 (토큰 갱신 포함)
+      - name: 피드 수집
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          NEW_TOKEN_FILE: ${{ runner.temp }}/ig_token
         run: python ig_feed.py
-
-      # 수집이 실패해도 갱신된 토큰은 반드시 저장
-      - name: 갱신된 토큰을 시크릿에 저장
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-          NEW_TOKEN_FILE: ${{ runner.temp }}/ig_token
-        run: |
-          if [ -s "$NEW_TOKEN_FILE" ]; then
-            gh secret set IG_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" < "$NEW_TOKEN_FILE"
-          fi
 
       - name: 변경 시 커밋/푸시
         run: |

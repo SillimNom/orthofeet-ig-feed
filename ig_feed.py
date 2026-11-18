@@ -1,30 +1,32 @@
-"""인스타 최신 게시물 12개 → assets/ig_feed/ 이미지 + feed.json. 토큰도 함께 갱신."""
+"""인스타 최신 게시물 12개 → assets/ig_feed/ 이미지 + feed.json."""
 import json
 import os
 import pathlib
+import urllib.error
 import urllib.parse
 import urllib.request
 
-API = "https://graph.instagram.com"
+API = "https://graph.facebook.com/v21.0"
+IG_USER_ID = "17841471697854191"  # 오쏘핏 공식 인스타 계정
 ROOT = pathlib.Path(__file__).parent
 IMG_DIR = ROOT / "assets" / "ig_feed"
 LIMIT = 12
-FIELDS = "id,media_type,media_url,thumbnail_url,permalink,caption,timestamp"
+FIELDS = "id,media_type,media_url,thumbnail_url,permalink,caption"
 
 
 def get_json(url):
-    with urllib.request.urlopen(url, timeout=30) as r:
-        return json.load(r)
+    try:
+        with urllib.request.urlopen(url, timeout=30) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as e:
+        # Meta가 돌려주는 상세 에러(code/subcode/message)를 로그에 남김
+        print(f"HTTP {e.code} 에러 응답: {e.read().decode(errors='replace')}")
+        raise
 
 
 def pick_image_url(m):
     """릴스(VIDEO)는 썸네일, 이미지/캐러셀은 media_url."""
     return m.get("thumbnail_url") if m.get("media_type") == "VIDEO" else m.get("media_url")
-
-
-def refresh_token(token):
-    q = urllib.parse.urlencode({"grant_type": "ig_refresh_token", "access_token": token})
-    return get_json(f"{API}/refresh_access_token?{q}")["access_token"]
 
 
 def download(url, dest):
@@ -38,18 +40,8 @@ def download(url, dest):
 def main():
     token = os.environ["IG_ACCESS_TOKEN"]
 
-    # 토큰 갱신: 발급 24시간 미만 등으로 실패해도 기존 토큰으로 계속 진행
-    try:
-        token = refresh_token(token)
-        out = os.environ.get("NEW_TOKEN_FILE")
-        if out:
-            pathlib.Path(out).write_text(token)
-        print("토큰 갱신 완료")
-    except Exception as e:
-        print(f"토큰 갱신 건너뜀: {type(e).__name__}")
-
-    q = urllib.parse.urlencode({"fields": FIELDS, "limit": 20, "access_token": token})
-    media = get_json(f"{API}/me/media?{q}")["data"]
+    q = urllib.parse.urlencode({"fields": FIELDS, "limit": LIMIT, "access_token": token})
+    media = get_json(f"{API}/{IG_USER_ID}/media?{q}")["data"]
 
     IMG_DIR.mkdir(parents=True, exist_ok=True)
     items = []
